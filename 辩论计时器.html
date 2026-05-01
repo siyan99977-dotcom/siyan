@@ -1,0 +1,868 @@
+@Love_siyan
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>辩论计时器by肆厌</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #f2f4f8;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 16px 20px;
+      color: #1e2b3a;
+    }
+    .container {
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    h1 {
+      font-weight: 500;
+      font-size: 1.9rem;
+      color: #1e3c5a;
+      letter-spacing: -0.2px;
+      margin: 0 0 4px 0;
+      border-bottom: 2px solid #d0ddee;
+      padding-bottom: 6px;
+      border-radius: 0 0 8px 8px;
+      text-align: center;
+    }
+    .theme-editor {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background-color: #ffffff;
+      border-radius: 20px;
+      padding: 8px 18px;
+      margin: 10px 0 18px 0;
+      box-shadow: 0 1px 4px rgba(0,20,40,0.04);
+      border: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .theme-editor label {
+      font-weight: 500;
+      color: #2c3e50;
+      font-size: 0.9rem;
+    }
+    #theme-input {
+      border: 1px solid #cfddee;
+      background: #fafcff;
+      padding: 6px 12px;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      min-width: 240px;
+      flex: 2 1 260px;
+      transition: 0.15s;
+    }
+    /* 主题显示区域：居中 + 大字体 */
+    .current-theme {
+      font-weight: 600;
+      font-size: 1.8rem;
+      background-color: #ffffff;
+      padding: 12px 28px;
+      border-radius: 60px;
+      border: 1px solid #dbe4ed;
+      color: #1f3a57;
+      margin: 8px auto 24px auto;
+      display: table;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+      letter-spacing: 1px;
+      max-width: 90%;
+      word-break: break-word;
+    }
+    .debate-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .team-card {
+      flex: 1 1 400px;
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 8px rgba(0,20,40,0.03);
+      border: 1px solid #e7edf5;
+      transition: box-shadow 0.2s;
+    }
+    .team-card.pro {
+      border-top: 4px solid #1f6e9c;
+    }
+    .team-card.con {
+      border-top: 4px solid #b1624d;
+    }
+    .team-card h3 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin: 0 0 12px 0;
+    }
+    .team-card.pro h3 { color: #1f6e9c; }
+    .team-card.con h3 { color: #b1624d; }
+    .speaker-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: #f9fbfe;
+      border-radius: 20px;
+      padding: 8px 14px;
+      margin: 10px 0;
+      border: 1px solid #ecf2f9;
+    }
+    .speaker-label {
+      font-weight: 550;
+      color: #2d425b;
+      min-width: 44px;
+      font-size: 1rem;
+    }
+    .timer-display {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 1.8rem;
+      font-weight: 500;
+      background: #ffffff;
+      padding: 4px 14px;
+      border-radius: 60px;
+      border: 1px solid #dae2ed;
+      color: #1f3a57;
+      min-width: 110px;
+      text-align: center;
+      transition: all 0.1s ease;
+    }
+    /* 心跳动画 */
+    @keyframes timerHeartbeat {
+      0% { transform: scale(1); text-shadow: 0 0 0 currentColor; }
+      50% { transform: scale(1.08); text-shadow: 0 0 8px currentColor; }
+      100% { transform: scale(1); text-shadow: 0 0 0 currentColor; }
+    }
+    .heartbeat {
+      animation: timerHeartbeat 0.2s cubic-bezier(0.2, 1.2, 0.8, 1) !important;
+    }
+    .timer-display.flash-pro {
+      animation: flashBlue 3s ease-in-out;
+    }
+    .timer-display.flash-con {
+      animation: flashRed 3s ease-in-out;
+    }
+    @keyframes flashBlue {
+      0% { background-color: #ffffff; border-color: #dae2ed; }
+      25% { background-color: #b0dcff; border-color: #1f6e9c; box-shadow: 0 0 12px rgba(31,110,156,0.6); }
+      50% { background-color: #ffffff; border-color: #dae2ed; }
+      75% { background-color: #b0dcff; border-color: #1f6e9c; box-shadow: 0 0 12px rgba(31,110,156,0.6); }
+      100% { background-color: #ffffff; border-color: #dae2ed; }
+    }
+    @keyframes flashRed {
+      0% { background-color: #ffffff; border-color: #dae2ed; }
+      25% { background-color: #ffcfbf; border-color: #b1624d; box-shadow: 0 0 12px rgba(177,98,77,0.6); }
+      50% { background-color: #ffffff; border-color: #dae2ed; }
+      75% { background-color: #ffcfbf; border-color: #b1624d; box-shadow: 0 0 12px rgba(177,98,77,0.6); }
+      100% { background-color: #ffffff; border-color: #dae2ed; }
+    }
+    .pro .timer-display {
+      border-left: 4px solid #1f6e9c;
+    }
+    .con .timer-display {
+      border-left: 4px solid #b1624d;
+    }
+    .timer-display.running {
+      background-color: #f0f7ff;
+      border-color: #a1c6e9;
+    }
+    .btn-group {
+      display: flex;
+      gap: 5px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: #edf2f7;
+      border: 1px solid #cbd6e4;
+      padding: 5px 12px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #1e3b4f;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      line-height: 1.2;
+    }
+    .btn:hover {
+      background: #e0e8f2;
+      transform: translateY(-1px);
+    }
+    .btn:active {
+      transform: translateY(1px);
+    }
+    .free-section {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 18px 20px;
+      border: 1px solid #e7edf5;
+      margin-top: 8px;
+    }
+    .free-section h3 {
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: #2b4057;
+      margin: 0 0 10px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #dae5f0;
+    }
+    .free-controls {
+      background: #f5f8fe;
+      border-radius: 80px;
+      padding: 8px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid #e2edf8;
+    }
+    .active-status {
+      background: #ffffff;
+      padding: 4px 14px;
+      border-radius: 60px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      border: 1px solid #d6e2ef;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .side-badge {
+      padding: 2px 10px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .pro-badge { background: #e2f0fa; color: #1f6e9c; }
+    .con-badge { background: #f9ede8; color: #b1624d; }
+    .inactive-badge { background: #eef2f7; color: #6b7f94; }
+    .free-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .free-btn-group .btn {
+      padding: 6px 16px;
+      font-weight: 600;
+      border-radius: 60px;
+    }
+    .btn-primary {
+      background: #1f6e9c !important;
+      border-color: #1f6e9c !important;
+      color: white !important;
+    }
+    .btn-switch {
+      background: #ffffff;
+      border-color: #b1624d;
+      color: #b1624d;
+    }
+    .free-panels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 4px;
+    }
+    .free-panel {
+      flex: 1 1 260px;
+      background: #f9fbfe;
+      border-radius: 32px;
+      padding: 16px 12px;
+      border: 1px solid #e2ecf7;
+      text-align: center;
+    }
+    .free-panel.pro { border-left: 5px solid #1f6e9c; border-radius: 32px; }
+    .free-panel.con { border-left: 5px solid #b1624d; border-radius: 32px; }
+    .panel-label {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    .free-panel .timer-display {
+      width: 100%;
+      font-size: 2.6rem;
+      margin-bottom: 4px;
+      border-radius: 80px;
+    }
+    .footer {
+      margin-top: 24px;
+      border-top: 1px solid #d3e0ee;
+      padding: 12px 0 6px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #546e86;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+    /* ========= 全屏覆盖层 - 白色背景，极简 ========= */
+    .fullscreen-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.2s, opacity 0.25s ease;
+    }
+    .fullscreen-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    /* 单方全屏容器 */
+    .speaker-full-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .giant-timer {
+      font-size: 18vw;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 6px;
+      color: #1f6e9c;
+      text-shadow: 0 8px 24px rgba(31, 110, 156, 0.2);
+      line-height: 1.2;
+      text-align: center;
+      transition: all 0.1s ease;
+    }
+    .giant-timer.con-color {
+      color: #b1624d;
+      text-shadow: 0 8px 24px rgba(177, 98, 77, 0.2);
+    }
+    /* 自由辩论全屏双方卡片 + 控制栏 */
+    .free-full-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      padding: 24px;
+    }
+    .free-dual-full {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 48px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto 40px auto;
+    }
+    .free-side-card-full {
+      flex: 1;
+      min-width: 260px;
+      background: #f8fafd;
+      border-radius: 64px;
+      padding: 48px 28px;
+      text-align: center;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+    }
+    .free-side-card-full.pro-active-full {
+      background: linear-gradient(145deg, #eef7ff, #ffffff);
+      border-left: 8px solid #1f6e9c;
+      box-shadow: 0 20px 35px -8px rgba(31, 110, 156, 0.2);
+      transform: scale(1.01);
+    }
+    .free-side-card-full.con-active-full {
+      background: linear-gradient(145deg, #fff4f0, #ffffff);
+      border-left: 8px solid #b1624d;
+      box-shadow: 0 20px 35px -8px rgba(177, 98, 77, 0.2);
+      transform: scale(1.01);
+    }
+    .free-role-full {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+    }
+    .free-big-time-full {
+      font-size: 5.2rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: #1e2b3a;
+      letter-spacing: 4px;
+    }
+    /* 全屏自由辩论控制按钮组 */
+    .fullscreen-free-controls {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .full-free-btn {
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 12px 28px;
+      border-radius: 60px;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #1e2b3a;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+      background: #f0f2f5;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .full-free-btn-primary {
+      background: #1f6e9c;
+      border: none;
+      color: white;
+    }
+    .full-free-btn-warning {
+      background: #b1624d;
+      border: none;
+      color: white;
+    }
+    .full-free-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(0.96);
+    }
+    /* 返回按钮 */
+    .exit-full-btn {
+      position: fixed;
+      top: 28px;
+      right: 32px;
+      width: 52px;
+      height: 52px;
+      background: rgba(0, 0, 0, 0.05);
+      border: none;
+      border-radius: 60px;
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: #1e2b3a;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+      font-weight: 300;
+      background: #f0f2f5;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .exit-full-btn:hover {
+      background: #e2e6ec;
+      transform: scale(1.05);
+    }
+    @media (max-width: 750px) {
+      .giant-timer { font-size: 20vw; letter-spacing: 2px; }
+      .free-big-time-full { font-size: 3rem; }
+      .free-side-card-full { padding: 28px 16px; }
+      .free-role-full { font-size: 1.4rem; }
+      .exit-full-btn { width: 44px; height: 44px; font-size: 1.5rem; top: 16px; right: 20px; }
+      .current-theme { font-size: 1.4rem; padding: 8px 20px; }
+      .full-free-btn { padding: 8px 20px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>辩论计时器</h1>
+
+  <div class="theme-editor">
+    <label for="theme-input">辩论主题</label>
+    <input type="text" id="theme-input" value="请在此处输入辩论主题..." placeholder="输入辩论主题...">
+  </div>
+
+  <!-- 主题显示：居中 + 大字体 -->
+  <div class="current-theme" id="theme-text">请在此处输入辩论主题...</div>
+
+  <div id="full-mode-content">
+    <div class="debate-row">
+      <div class="team-card pro">
+        <h3>正方</h3>
+        <div class="speaker-row pro"><span class="speaker-label">一辩</span><span class="timer-display" id="pro-1">03:00</span><div class="btn-group"><button class="btn start-timer" data-id="pro-1" data-dur="180" data-side="pro" data-name="正方 · 一辩">开始</button><button class="btn pause-timer" data-id="pro-1">暂停</button><button class="btn reset-timer" data-id="pro-1" data-dur="180">重置</button></div></div>
+        <div class="speaker-row pro"><span class="speaker-label">二辩</span><span class="timer-display" id="pro-2">02:00</span><div class="btn-group"><button class="btn start-timer" data-id="pro-2" data-dur="120" data-side="pro" data-name="正方 · 二辩">开始</button><button class="btn pause-timer" data-id="pro-2">暂停</button><button class="btn reset-timer" data-id="pro-2" data-dur="120">重置</button></div></div>
+        <div class="speaker-row pro"><span class="speaker-label">三辩</span><span class="timer-display" id="pro-3">02:00</span><div class="btn-group"><button class="btn start-timer" data-id="pro-3" data-dur="120" data-side="pro" data-name="正方 · 三辩">开始</button><button class="btn pause-timer" data-id="pro-3">暂停</button><button class="btn reset-timer" data-id="pro-3" data-dur="120">重置</button></div></div>
+        <div class="speaker-row pro"><span class="speaker-label">四辩</span><span class="timer-display" id="pro-4">03:00</span><div class="btn-group"><button class="btn start-timer" data-id="pro-4" data-dur="180" data-side="pro" data-name="正方 · 四辩">开始</button><button class="btn pause-timer" data-id="pro-4">暂停</button><button class="btn reset-timer" data-id="pro-4" data-dur="180">重置</button></div></div>
+      </div>
+      <div class="team-card con">
+        <h3>反方</h3>
+        <div class="speaker-row con"><span class="speaker-label">一辩</span><span class="timer-display" id="con-1">03:00</span><div class="btn-group"><button class="btn start-timer" data-id="con-1" data-dur="180" data-side="con" data-name="反方 · 一辩">开始</button><button class="btn pause-timer" data-id="con-1">暂停</button><button class="btn reset-timer" data-id="con-1" data-dur="180">重置</button></div></div>
+        <div class="speaker-row con"><span class="speaker-label">二辩</span><span class="timer-display" id="con-2">02:00</span><div class="btn-group"><button class="btn start-timer" data-id="con-2" data-dur="120" data-side="con" data-name="反方 · 二辩">开始</button><button class="btn pause-timer" data-id="con-2">暂停</button><button class="btn reset-timer" data-id="con-2" data-dur="120">重置</button></div></div>
+        <div class="speaker-row con"><span class="speaker-label">三辩</span><span class="timer-display" id="con-3">02:00</span><div class="btn-group"><button class="btn start-timer" data-id="con-3" data-dur="120" data-side="con" data-name="反方 · 三辩">开始</button><button class="btn pause-timer" data-id="con-3">暂停</button><button class="btn reset-timer" data-id="con-3" data-dur="120">重置</button></div></div>
+        <div class="speaker-row con"><span class="speaker-label">四辩</span><span class="timer-display" id="con-4">03:00</span><div class="btn-group"><button class="btn start-timer" data-id="con-4" data-dur="180" data-side="con" data-name="反方 · 四辩">开始</button><button class="btn pause-timer" data-id="con-4">暂停</button><button class="btn reset-timer" data-id="con-4" data-dur="180">重置</button></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="free-section">
+    <h3>自由辩论环节</h3>
+    <div class="free-controls">
+      <div class="active-status"><span>⏱️当前计时：</span><span id="active-side-label" class="side-badge inactive-badge">未开始</span></div>
+      <div class="free-btn-group">
+        <button class="btn btn-primary" id="free-start-pause-btn">开始自由辩论</button>
+        <button class="btn btn-switch" id="free-switch-btn">⇄ 切换辩论双方</button>
+        <button class="btn" id="free-reset-btn">重置双方</button>
+      </div>
+    </div>
+    <div class="free-panels">
+      <div class="free-panel pro"><div class="panel-label">正方自由辩论剩余</div><span class="timer-display" id="free-pro">04:00</span></div>
+      <div class="free-panel con"><div class="panel-label">反方自由辩论剩余</div><span class="timer-display" id="free-con">04:00</span></div>
+    </div>
+  </div>
+
+  <div class="footer"><span>辩论计时器</span><span>原创作品 - 严禁抄袭</span><span>设计 · by肆厌</span></div>
+</div>
+
+<!-- 全屏覆盖层（纯白背景，极简 + 自由辩论带控制按键） -->
+<div id="fullscreenOverlay" class="fullscreen-overlay">
+  <button class="exit-full-btn" id="exitFullscreenBtn">✕</button>
+  <!-- 单方全屏视图 -->
+  <div id="speakerFullView" style="display: none; width: 100%; height: 100%;">
+    <div class="speaker-full-wrapper">
+      <div id="giantTimer" class="giant-timer">00:00</div>
+    </div>
+  </div>
+  <!-- 自由辩论全屏视图（包含双方计时 + 控制按键） -->
+  <div id="freeFullView" style="display: none; width: 100%; height: 100%;">
+    <div class="free-full-container">
+      <div class="free-dual-full">
+        <div class="free-side-card-full" id="fullFreeProCard">
+          <div class="free-role-full" style="color: #1f6e9c;">正方</div>
+          <div class="free-big-time-full" id="fullFreeProTime">04:00</div>
+        </div>
+        <div class="free-side-card-full" id="fullFreeConCard">
+          <div class="free-role-full" style="color: #b1624d;">反方</div>
+          <div class="free-big-time-full" id="fullFreeConTime">04:00</div>
+        </div>
+      </div>
+      <div class="fullscreen-free-controls">
+        <button class="full-free-btn full-free-btn-primary" id="fullFreeStartPause">开始自由辩论</button>
+        <button class="full-free-btn" id="fullFreeSwitch">⇄ 切换辩论双方</button>
+        <button class="full-free-btn full-free-btn-warning" id="fullFreeReset">重置双方</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 音频
+  let audioCtx = null;
+  function beep() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.frequency.value = 880;
+      gainNode.gain.setValueAtTime(0.5, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+      oscillator.start(now);
+      oscillator.stop(now + 0.4);
+    } catch(e) { console.warn(e); }
+  }
+
+  // 心跳动画
+  function addHeartbeat(el) {
+    if (!el) return;
+    el.classList.remove('heartbeat');
+    void el.offsetWidth;
+    el.classList.add('heartbeat');
+    setTimeout(() => el.classList.remove('heartbeat'), 220);
+  }
+
+  function formatTime(sec) {
+    let m = Math.floor(sec / 60);
+    let s = sec % 60;
+    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  }
+  function parseTime(str) {
+    let parts = str.split(':').map(Number);
+    return parts.length === 2 ? parts[0]*60 + parts[1] : NaN;
+  }
+
+  let timers = {};
+  let thirtyTriggered = {};
+  function pauseTimer(id) { if (timers[id]) { clearInterval(timers[id]); timers[id] = null; } let el = document.getElementById(id); if(el) el.classList.remove('running'); }
+  function resetTimer(id, duration) { pauseTimer(id); let el = document.getElementById(id); if(el) { el.textContent = formatTime(duration); el.classList.remove('running'); thirtyTriggered[id] = false; } }
+  function getSideFromId(id) { return id.startsWith('pro-') ? 'pro' : (id.startsWith('con-') ? 'con' : null); }
+
+  // 全屏管理
+  let currentFullscreenMode = null; // 'speaker' or 'free'
+  let fullscreenSyncInterval = null;
+  let activeSpeakerTimerId = null;
+
+  function exitFullscreen() {
+    if (fullscreenSyncInterval) { clearInterval(fullscreenSyncInterval); fullscreenSyncInterval = null; }
+    const overlay = document.getElementById('fullscreenOverlay');
+    overlay.classList.remove('active');
+    document.body.classList.remove('fullscreen-active');
+    document.getElementById('speakerFullView').style.display = 'none';
+    document.getElementById('freeFullView').style.display = 'none';
+    currentFullscreenMode = null;
+    activeSpeakerTimerId = null;
+  }
+
+  // 单方全屏显示
+  function showSpeakerFullscreen(timerId, side, initialTime) {
+    if (currentFullscreenMode) exitFullscreen();
+    const overlay = document.getElementById('fullscreenOverlay');
+    const speakerView = document.getElementById('speakerFullView');
+    const freeView = document.getElementById('freeFullView');
+    speakerView.style.display = 'block';
+    freeView.style.display = 'none';
+    const giantSpan = document.getElementById('giantTimer');
+    giantSpan.textContent = initialTime;
+    if (side === 'pro') {
+      giantSpan.classList.remove('con-color');
+      giantSpan.style.color = '#1f6e9c';
+    } else {
+      giantSpan.classList.add('con-color');
+      giantSpan.style.color = '#b1624d';
+    }
+    overlay.classList.add('active');
+    document.body.classList.add('fullscreen-active');
+    currentFullscreenMode = 'speaker';
+    activeSpeakerTimerId = timerId;
+
+    if (fullscreenSyncInterval) clearInterval(fullscreenSyncInterval);
+    fullscreenSyncInterval = setInterval(() => {
+      if (currentFullscreenMode !== 'speaker') return;
+      const original = document.getElementById(timerId);
+      if (!original || !overlay.classList.contains('active')) {
+        exitFullscreen();
+        return;
+      }
+      const newText = original.textContent;
+      if (giantSpan.textContent !== newText) {
+        giantSpan.textContent = newText;
+        addHeartbeat(giantSpan);
+      }
+      if (newText === '00:00') {
+        beep();
+        exitFullscreen();
+      }
+    }, 120);
+  }
+
+  // 开始计时（带全屏）
+  function startTimer(id, duration, side, displayName) {
+    pauseTimer(id);
+    let timerElement = document.getElementById(id);
+    let currentSec = parseTime(timerElement.textContent);
+    if (isNaN(currentSec) || currentSec <= 0) currentSec = duration;
+    timerElement.classList.add('running');
+    thirtyTriggered[id] = false;
+    timers[id] = setInterval(() => {
+      if (currentSec <= 0) {
+        clearInterval(timers[id]); timers[id] = null;
+        if (timerElement) {
+          timerElement.classList.remove('running');
+          const sd = getSideFromId(id);
+          if (sd) {
+            beep();
+            timerElement.classList.add(sd === 'pro' ? 'flash-pro' : 'flash-con');
+            setTimeout(() => timerElement.classList.remove('flash-pro', 'flash-con'), 3000);
+          }
+        }
+        if (currentFullscreenMode === 'speaker') exitFullscreen();
+        return;
+      }
+      currentSec--;
+      const newText = formatTime(currentSec);
+      timerElement.textContent = newText;
+      addHeartbeat(timerElement);
+      if (currentFullscreenMode === 'speaker' && activeSpeakerTimerId === id) {
+        const giant = document.getElementById('giantTimer');
+        if (giant) { giant.textContent = newText; addHeartbeat(giant); }
+      }
+      if (currentSec === 30 && !thirtyTriggered[id]) {
+        thirtyTriggered[id] = true;
+        const sd = getSideFromId(id);
+        if (sd) {
+          beep();
+          timerElement.classList.add(sd === 'pro' ? 'flash-pro' : 'flash-con');
+          setTimeout(() => timerElement.classList.remove('flash-pro', 'flash-con'), 3000);
+        }
+      }
+    }, 1000);
+    showSpeakerFullscreen(id, side, formatTime(currentSec));
+  }
+
+  // ----- 自由辩论逻辑（完整保留并绑定全屏按钮）-----
+  let freeProRemaining = 240, freeConRemaining = 240;
+  let freeActiveSide = null;
+  let isFreeRunning = false;
+  let freeInterval = null;
+  let freeThirtyTriggered = { pro: false, con: false };
+  const freeProDisplay = document.getElementById('free-pro');
+  const freeConDisplay = document.getElementById('free-con');
+  const activeSideLabel = document.getElementById('active-side-label');
+  const freeStartPauseBtn = document.getElementById('free-start-pause-btn');
+  const freeSwitchBtn = document.getElementById('free-switch-btn');
+  const freeResetBtn = document.getElementById('free-reset-btn');
+
+  function updateFreeDisplays() {
+    if (freeProDisplay) freeProDisplay.textContent = formatTime(freeProRemaining);
+    if (freeConDisplay) freeConDisplay.textContent = formatTime(freeConRemaining);
+    if (currentFullscreenMode === 'free') refreshFreeFullscreenUI();
+  }
+  function updateActiveSideLabel() {
+    if (freeActiveSide === 'pro') { activeSideLabel.textContent = '正方 正在计时'; activeSideLabel.className = 'side-badge pro-badge'; }
+    else if (freeActiveSide === 'con') { activeSideLabel.textContent = '反方 正在计时'; activeSideLabel.className = 'side-badge con-badge'; }
+    else { activeSideLabel.textContent = '未开始 / 已暂停'; activeSideLabel.className = 'side-badge inactive-badge'; }
+  }
+  function stopFreeTimer() { if (freeInterval) { clearInterval(freeInterval); freeInterval = null; } isFreeRunning = false; if (freeStartPauseBtn) freeStartPauseBtn.textContent = '开始自由辩论'; if(document.getElementById('fullFreeStartPause')) document.getElementById('fullFreeStartPause').textContent = '开始自由辩论'; }
+  function startFreeTimer() {
+    if (freeActiveSide !== 'pro' && freeActiveSide !== 'con') return;
+    if (freeInterval) stopFreeTimer();
+    freeInterval = setInterval(() => {
+      if (freeActiveSide === 'pro') {
+        if (freeProRemaining > 0) {
+          freeProRemaining--;
+          updateFreeDisplays();
+          addHeartbeat(freeProDisplay);
+          if (currentFullscreenMode === 'free') addHeartbeat(document.getElementById('fullFreeProTime'));
+          if (freeProRemaining === 30 && !freeThirtyTriggered.pro) { freeThirtyTriggered.pro = true; beep(); freeProDisplay.classList.add('flash-pro'); setTimeout(()=>freeProDisplay.classList.remove('flash-pro'),3000); }
+          if (freeProRemaining === 0) { stopFreeTimer(); freeActiveSide = null; updateActiveSideLabel(); beep(); freeProDisplay.classList.add('flash-pro'); setTimeout(()=>freeProDisplay.classList.remove('flash-pro'),3000); alert('正方自由辩论时间已用完！'); if (currentFullscreenMode === 'free') exitFullscreen(); }
+        } else { stopFreeTimer(); freeActiveSide = null; updateActiveSideLabel(); if (currentFullscreenMode === 'free') exitFullscreen(); }
+      } else if (freeActiveSide === 'con') {
+        if (freeConRemaining > 0) {
+          freeConRemaining--;
+          updateFreeDisplays();
+          addHeartbeat(freeConDisplay);
+          if (currentFullscreenMode === 'free') addHeartbeat(document.getElementById('fullFreeConTime'));
+          if (freeConRemaining === 30 && !freeThirtyTriggered.con) { freeThirtyTriggered.con = true; beep(); freeConDisplay.classList.add('flash-con'); setTimeout(()=>freeConDisplay.classList.remove('flash-con'),3000); }
+          if (freeConRemaining === 0) { stopFreeTimer(); freeActiveSide = null; updateActiveSideLabel(); beep(); freeConDisplay.classList.add('flash-con'); setTimeout(()=>freeConDisplay.classList.remove('flash-con'),3000); alert('反方自由辩论时间已用完！'); if (currentFullscreenMode === 'free') exitFullscreen(); }
+        } else { stopFreeTimer(); freeActiveSide = null; updateActiveSideLabel(); if (currentFullscreenMode === 'free') exitFullscreen(); }
+      }
+    }, 1000);
+    isFreeRunning = true;
+    if (freeStartPauseBtn) freeStartPauseBtn.textContent = '暂停自由辩论';
+    if(document.getElementById('fullFreeStartPause')) document.getElementById('fullFreeStartPause').textContent = '暂停自由辩论';
+  }
+  function pauseFreeTimer() { if (freeInterval) { clearInterval(freeInterval); freeInterval = null; } isFreeRunning = false; if (freeStartPauseBtn) freeStartPauseBtn.textContent = '开始自由辩论'; if(document.getElementById('fullFreeStartPause')) document.getElementById('fullFreeStartPause').textContent = '开始自由辩论'; }
+  function switchFreeSide() {
+    pauseFreeTimer();
+    if (freeActiveSide === null) {
+      if (freeProRemaining > 0) { freeActiveSide = 'pro'; updateActiveSideLabel(); startFreeTimer(); }
+      else if (freeConRemaining > 0) { freeActiveSide = 'con'; updateActiveSideLabel(); startFreeTimer(); }
+      else alert('双方时间已用完');
+    } else {
+      if (freeActiveSide === 'pro') { if (freeConRemaining <= 0) { alert('反方时间已用完'); if (freeProRemaining > 0) { freeActiveSide = 'pro'; startFreeTimer(); } else freeActiveSide = null; } else freeActiveSide = 'con'; }
+      else { if (freeProRemaining <= 0) { alert('正方时间已用完'); if (freeConRemaining > 0) { freeActiveSide = 'con'; startFreeTimer(); } else freeActiveSide = null; } else freeActiveSide = 'pro'; }
+      updateActiveSideLabel();
+      startFreeTimer();
+    }
+    if (currentFullscreenMode === 'free') refreshFreeFullscreenUI();
+  }
+  function resetFreeDebate() {
+    if (freeInterval) { clearInterval(freeInterval); freeInterval = null; }
+    isFreeRunning = false; freeActiveSide = null; freeProRemaining = 240; freeConRemaining = 240;
+    freeThirtyTriggered = { pro: false, con: false };
+    updateFreeDisplays(); updateActiveSideLabel(); if (freeStartPauseBtn) freeStartPauseBtn.textContent = '开始自由辩论'; if(document.getElementById('fullFreeStartPause')) document.getElementById('fullFreeStartPause').textContent = '开始自由辩论';
+    if (currentFullscreenMode === 'free') refreshFreeFullscreenUI();
+  }
+  function onStartPauseFree() {
+    if (freeProRemaining === 0 && freeConRemaining === 0) { alert('双方时间均用完，请重置'); return; }
+    if (freeActiveSide === null) {
+      if (freeProRemaining > 0) { freeActiveSide = 'pro'; updateActiveSideLabel(); startFreeTimer(); }
+      else if (freeConRemaining > 0) { freeActiveSide = 'con'; updateActiveSideLabel(); startFreeTimer(); }
+      else alert('无可用时间');
+    } else {
+      if (isFreeRunning) pauseFreeTimer(); else startFreeTimer();
+    }
+    if (!currentFullscreenMode) showFreeFullscreen();
+  }
+  function showFreeFullscreen() {
+    if (currentFullscreenMode) exitFullscreen();
+    const overlay = document.getElementById('fullscreenOverlay');
+    document.getElementById('speakerFullView').style.display = 'none';
+    const freeView = document.getElementById('freeFullView');
+    freeView.style.display = 'block';
+    overlay.classList.add('active');
+    document.body.classList.add('fullscreen-active');
+    currentFullscreenMode = 'free';
+    refreshFreeFullscreenUI();
+    if (fullscreenSyncInterval) clearInterval(fullscreenSyncInterval);
+    fullscreenSyncInterval = setInterval(() => {
+      if (currentFullscreenMode !== 'free') return;
+      refreshFreeFullscreenUI();
+      if (freeProRemaining === 0 && freeConRemaining === 0 && currentFullscreenMode === 'free') { beep(); exitFullscreen(); }
+    }, 150);
+  }
+  function refreshFreeFullscreenUI() {
+    const proTimeSpan = document.getElementById('fullFreeProTime');
+    const conTimeSpan = document.getElementById('fullFreeConTime');
+    if (proTimeSpan) proTimeSpan.textContent = formatTime(freeProRemaining);
+    if (conTimeSpan) conTimeSpan.textContent = formatTime(freeConRemaining);
+    const proCard = document.getElementById('fullFreeProCard');
+    const conCard = document.getElementById('fullFreeConCard');
+    if (freeActiveSide === 'pro') { proCard.classList.add('pro-active-full'); conCard.classList.remove('con-active-full'); }
+    else if (freeActiveSide === 'con') { conCard.classList.add('con-active-full'); proCard.classList.remove('pro-active-full'); }
+    else { proCard.classList.remove('pro-active-full'); conCard.classList.remove('con-active-full'); }
+    // 同步按钮文本
+    const fullBtn = document.getElementById('fullFreeStartPause');
+    if (fullBtn) fullBtn.textContent = isFreeRunning ? '暂停自由辩论' : '开始自由辩论';
+  }
+
+  // 绑定全屏自由辩论按钮事件
+  document.getElementById('fullFreeStartPause')?.addEventListener('click', onStartPauseFree);
+  document.getElementById('fullFreeSwitch')?.addEventListener('click', switchFreeSide);
+  document.getElementById('fullFreeReset')?.addEventListener('click', resetFreeDebate);
+
+  // 绑定主界面按钮事件
+  document.querySelectorAll('.start-timer').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-id');
+      const dur = parseInt(btn.getAttribute('data-dur'));
+      const side = btn.getAttribute('data-side');
+      const name = btn.getAttribute('data-name');
+      startTimer(id, dur, side, name);
+    });
+  });
+  document.querySelectorAll('.pause-timer').forEach(btn => {
+    btn.addEventListener('click', () => { const id = btn.getAttribute('data-id'); pauseTimer(id); if (currentFullscreenMode === 'speaker') exitFullscreen(); });
+  });
+  document.querySelectorAll('.reset-timer').forEach(btn => {
+    btn.addEventListener('click', () => { const id = btn.getAttribute('data-id'); const dur = parseInt(btn.getAttribute('data-dur')); resetTimer(id, dur); if (currentFullscreenMode === 'speaker') exitFullscreen(); });
+  });
+  freeStartPauseBtn.addEventListener('click', onStartPauseFree);
+  freeSwitchBtn.addEventListener('click', switchFreeSide);
+  freeResetBtn.addEventListener('click', resetFreeDebate);
+  document.getElementById('exitFullscreenBtn').addEventListener('click', exitFullscreen);
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && currentFullscreenMode) exitFullscreen(); });
+
+  // 主题手动输入
+  const themeInput = document.getElementById('theme-input');
+  const themeText = document.getElementById('theme-text');
+  themeInput.addEventListener('input', (e) => { themeText.textContent = e.target.value || '辩论主题'; });
+
+  updateFreeDisplays(); updateActiveSideLabel();
+</script>
+</body>
+</html>
